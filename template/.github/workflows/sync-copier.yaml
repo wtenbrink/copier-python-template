@@ -6,7 +6,7 @@ on:
     workflow_dispatch:
 
 env:
-    SOURCE_TEMPLATE_URL: <PLACEHOLDER> # URL of the online template
+    SOURCE_TEMPLATE_URL: https://github.com/wtenbrink/copier-python-template/tree/master # URL of the online template, replace with your own
 
 jobs:
     sync-copier-template:
