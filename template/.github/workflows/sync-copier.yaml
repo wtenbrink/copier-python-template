@@ -5,8 +5,6 @@ on:
         - cron: '0 0 * * *'
     workflow_dispatch:
 
-env:
-    SOURCE_TEMPLATE_URL: https://github.com/wtenbrink/copier-python-template/tree/master # URL of the online template, replace with your own
 
 jobs:
     sync-copier-template:
@@ -18,10 +16,6 @@ jobs:
               run: |
                 git config --global user.name "Copier update workflow"
                 git config --global user.email "copierupdateworkflow@users.noreply.github.com"
-            - name: Update _src_path to online template
-              uses: mikefarah/yq@v4
-              with:
-                cmd: yq -i '._src_path = "${{ env.SOURCE_TEMPLATE_URL }}"' '.copier-answers.yml'
             - uses: actions/setup-python@v4
               with:
                   python-version-file: pyproject.toml
@@ -53,7 +47,7 @@ jobs:
                 if [[ "$(git status --porcelain)" ]]; then
                     git checkout -b copier-update
                     git add .
-                    git commit -m "Update _src_path to online template and update lockfile"
+                    git commit -m "Update lockfile"
                     git push origin copier-update
                 fi
                 
