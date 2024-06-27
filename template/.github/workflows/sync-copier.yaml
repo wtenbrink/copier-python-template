@@ -5,16 +5,23 @@ on:
         - cron: '0 0 * * *'
     workflow_dispatch:
 
+env:
+    SOURCE_TEMPLATE_URL: <PLACEHOLDER> # URL of the online template
+
 jobs:
     sync-copier-template:
         name: Sync Copier template
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
+            - name: Configure git
+              run: |
+                git config --global user.name "Copier update workflow"
+                git config --global user.email "copierupdateworkflow@users.noreply.github.com"
             - name: Update _src_path to online template
               uses: mikefarah/yq@v4
               with:
-                cmd: yq -i '._src_path = https://github.com/wtenbrink/copier-python-template' '.copier-answers.yml'
+                cmd: yq -i '._src_path = "${{ env.SOURCE_TEMPLATE_URL }}"' '.copier-answers.yml'
             - uses: actions/setup-python@v4
               with:
                   python-version-file: pyproject.toml
@@ -36,12 +43,31 @@ jobs:
               id: install-copier-dependencies
               if: steps.cached-copier-dependencies.outputs.cache-hit != 'true'
               run: |
+                poetry lock --no-update
                 poetry install --only copier --no-interaction --no-root
             # Sync template
-            - run: |
+            - name: Sync template
+              env:
+                GH_TOKEN: ${{ github.token }}
+              run: |
+                if [[ "$(git status --porcelain)" ]]; then
+                    git checkout -b copier-update
+                    git add .
+                    git commit -m "Update _src_path to online template and update lockfile"
+                    git push origin copier-update
+                fi
+                
                 poetry run copier update --skip-answered
-                git add .
-                git diff --quiet || git checkout -b copier-update && \
-                git commit -m "Sync Copier template" && \
-                git push origin copier-update && \
-                gh pr create --title "Sync Copier template" --body "Sync Copier template" --base master --head copier-update
+                
+                if [[ "$(git status --porcelain)" ]]; then
+                  if [[ "$(git rev-parse --abbrev-ref HEAD)" != "copier-update" ]]; then
+                    git checkout -b copier-update
+                  fi
+                  git add .
+                  git commit -m "Sync Copier template"
+                  git push origin copier-update
+                fi
+
+                if [[ "$(git rev-parse --abbrev-ref HEAD)" == "copier-update" ]]; then
+                  gh pr create --title "Sync Copier template" --body "Sync Copier template" --base ${{ github.ref_name }} --head copier-update
+                fi
