@@ -1,0 +1,14 @@
+# Config
+_subdirectory: template
+
+
+# Questions
+project_name:
+  type: str
+  question: "What is the name of the project?"
+  default: "My Project"
+
+project_description:
+  type: str
+  question: "What is the description of the project?"
+  default: "My project description"

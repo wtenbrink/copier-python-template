@@ -1,0 +1,133 @@
+name: Run CI checks
+
+on:
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+
+env:
+  POETRY_VERSION: 1.8.3
+  TEST_REPO_ANSWERS_FILE_PATH: tests/test-repo-answers.yml
+
+jobs:
+  check-top-level-repo:
+    name: Check top-level repo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version-file: pyproject.toml
+      - uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      # Load cached venv if dependencies didn't change
+      - name: Load cached venv
+        id: cached-copier-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-poetry-${{ env.POETRY_VERSION }}-${{ hashFiles('pyproject.toml') }}
+      # Otherwise, install dependencies
+      - name: Install copier dependencies
+        id: install-copier-dependencies
+        if: steps.cached-copier-dependencies.outputs.cache-hit != 'true'
+        run: |
+          poetry install --no-interaction --no-root
+      # Run CI checks
+      - name: Run Black
+        id: run-black
+        run: |
+          poetry run black --check .
+      - name: Run Flake8
+        id: run-flake8
+        run: |
+          poetry run flake8
+      - name: Run Pytest
+        id: run-pytest
+        run: |
+          poetry run pytest
+  check-template-validity:
+    name: Check template validity
+    runs-on: ubuntu-latest
+    env:
+      COPIED_REPO_PATH: ${{ github.workspace }}/tmp/copied-repo
+    steps:
+      # Install copier
+      - uses: actions/checkout@v4
+      - id: setup-python-for-copier
+        uses: actions/setup-python@v4
+        with:
+          python-version-file: pyproject.toml
+      - uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      # Load previously cached venv
+      - name: Load cached venv
+        id: cached-copier-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-poetry-${{ env.POETRY_VERSION }}-${{ hashFiles('pyproject.toml') }}
+      - name: Install copier dependencies
+        id: install-copier-dependencies
+        if: steps.cached-copier-dependencies.outputs.cache-hit != 'true'
+        run: |
+          poetry install --no-interaction --no-root
+      # Create a repo from template
+      - name: Create repo from template
+        id: create-repo-from-template
+        run: |
+          poetry run copier copy --data-file ${{ env.TEST_REPO_ANSWERS_FILE_PATH }} --trust -l -r HEAD . ${{ env.COPIED_REPO_PATH }}
+
+      ###
+      # Copied repo checks
+      ###
+
+      # Install dependencies
+      - id: setup-python-for-copied-repo
+        uses: actions/setup-python@v4
+        with:
+          python-version-file: ${{ env.COPIED_REPO_PATH }}/pyproject.toml
+      # Load cached venv if dependencies didn't change
+      - name: Load cached venv
+        id: cached-copied-repo-dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.COPIED_REPO_PATH }}/.venv
+          key: venv-${{ runner.os }}-poetry-${{ env.POETRY_VERSION }}-${{ hashFiles('${{ env.COPIED_REPO_PATH }}/pyproject.toml') }}
+      # Otherwise, install dependencies
+      - name: Install copied repo dependencies
+        id: install-copied-repo-dependencies
+        if: steps.cached-copied-repo-dependencies.outputs.cache-hit != 'true'
+        run: |
+          cd ${{ env.COPIED_REPO_PATH }}
+          poetry install --no-interaction --no-root
+      - name: Install copied repo project
+        id: install-copied-repo-project
+        run: |
+          cd ${{ env.COPIED_REPO_PATH }}
+          poetry install --no-interaction
+      # Run CI checks
+      - name: Run Black
+        id: run-black
+        run: |
+          cd ${{ env.COPIED_REPO_PATH }}
+          poetry run black --check .
+      - name: Run Flake8
+        id: run-flake8
+        run: |
+          cd ${{ env.COPIED_REPO_PATH }}
+          poetry run flake8
+      - name: Run Pytest
+        id: run-pytest
+        run: |
+          cd  ${{ env.COPIED_REPO_PATH }}
+          poetry run pytest

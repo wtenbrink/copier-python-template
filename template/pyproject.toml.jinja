@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "{{ project_name | lower | replace(" ", "-") }}"
+version = "0.1.0"
+description = "{{ project_description }}"
+packages = [
+    {include = "src"}
+]
+authors = [
+    # placeholder
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"  # update to preferred version
+# placeholder for additional dependencies
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.4.2"
+flake8 = "^7.0.0"
+flake8-isort = "^6.1.1"
+flake8-pyproject = "^1.2.3"
+pep8-naming = "^0.13.3"
+pytest = "^8.2.0"
+PyYAML = "^6.0.1"
+pre-commit = "^3.7.0"
+# placeholder for additional dependencies
+
+[tool.flake8]
+extend-exclude = [
+    ".venv/"
+]
+max-line-length = 120
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests"
+]
+
+[tool.poetry-git-version-plugin]
+make_alpha_version = true
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

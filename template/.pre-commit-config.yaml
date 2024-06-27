@@ -1,0 +1,30 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+    -   id: check-yaml
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+# Run from poetry to ensure local linting is consistent with CI
+-   repo: local
+    hooks:
+    -   id: poetry-run-black
+        name: Run Black from Poetry
+        entry: poetry run black .
+        language: python
+        types: [python]
+    -   id: poetry-run-isort
+        name: Run Isort from Poetry
+        entry: poetry run isort .
+        language: python
+        types: [python]
+    -   id: poetry-run-flake8
+        name: Run Flake8 from Poetry
+        entry: poetry run flake8
+        language: python
+        types: [python]
+    -   id: poetry-run-pytest
+        name: Run Pytest from Poetry
+        entry: poetry run pytest
+        language: python
+        types: [python]
