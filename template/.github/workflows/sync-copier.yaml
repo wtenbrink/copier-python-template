@@ -1,0 +1,43 @@
+name: Sync Copier template
+
+on:
+    schedule:
+        - cron: '0 0 * * *'
+    workflow_dispatch:
+
+jobs:
+    sync-copier-template:
+        name: Sync Copier template
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v4
+              with:
+                  python-version-file: pyproject.toml
+            - uses: snok/install-poetry@v1
+              with:
+                version: ${{ env.POETRY_VERSION }}
+                virtualenvs-create: true
+                virtualenvs-in-project: true
+                installer-parallel: true
+            # Load cached venv if dependencies didn't change
+            - name: Load cached venv
+              id: cached-copier-dependencies
+              uses: actions/cache@v3
+              with:
+                path: .venv
+                key: venv-${{ runner.os }}-poetry-${{ env.POETRY_VERSION }}-${{ hashFiles('pyproject.toml') }}
+            # Otherwise, install dependencies
+            - name: Install copier dependencies
+              id: install-copier-dependencies
+              if: steps.cached-copier-dependencies.outputs.cache-hit != 'true'
+              run: |
+                poetry install --only copier --no-interaction --no-root
+            # Sync template
+            - run: |
+                poetry run copier update --skip-answered
+                git add .
+                git diff --quiet || git checkout -b copier-update && \
+                git commit -m "Sync Copier template" && \
+                git push origin copier-update && \
+                gh pr create --title "Sync Copier template" --body "Sync Copier template" --base master --head copier-update
