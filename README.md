@@ -1,1 +1,1 @@
-# copier-autoupdate
+# copier-python-template
