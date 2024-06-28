@@ -47,7 +47,7 @@ jobs:
             - name: Sync template
               env:
                 GH_TOKEN: ${{ github.token }}
-                PR_BRANCH: copier-update
+                PR_BRANCH: copier-update-${{ github.run_id }}
                 THIS_WORKFLOW_PATH: ./.github/workflows/sync-copier.yaml
               run: |
                 if [[ "$(git status --porcelain)" ]]; then
