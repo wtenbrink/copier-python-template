@@ -78,5 +78,5 @@ jobs:
                   --body "Sync Copier template" \
                   --base ${{ github.ref_name }} \
                   --head ${{ env.PR_BRANCH }}
-                  gh pr merge ${{ env.PR_BRANCH }} --auto --squash --merge --delete-branch
+                  gh pr merge ${{ env.PR_BRANCH }} --auto --squash --delete-branch
                 fi
