@@ -72,7 +72,7 @@ jobs:
                 if [[ "$(git rev-parse --abbrev-ref HEAD)" == "${{ env.PR_BRANCH }}" ]]; then
                   PR_BODY="Sync Copier template"
                   if [[ "$(git diff ${{ env.THIS_WORKFLOW_PATH }})" ]]; then
-                    PR_BODY="${PR_BODY}\n ${{ env.THIS_WORKFLOW_PATH }} is out of sync, this needs to be updated manually with \`copier update\`."
+                    PR_BODY="${PR_BODY}\n ${{ env.THIS_WORKFLOW_PATH }} is out of sync, this needs to be updated manually by checking out this branch and running \`copier update -A\`."
                   fi
                   gh pr create --title "Sync Copier template" \
                   --body "Sync Copier template" \
