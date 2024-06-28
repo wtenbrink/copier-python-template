@@ -46,25 +46,30 @@ jobs:
             - name: Sync template
               env:
                 GH_TOKEN: ${{ github.token }}
+                PR_BRANCH: copier-update
               run: |
                 if [[ "$(git status --porcelain)" ]]; then
-                    git checkout -b copier-update
+                    git checkout -b ${{ env.PR_BRANCH }}
                     git add .
                     git commit -m "Update lockfile"
-                    git push origin copier-update
+                    git push origin ${{ env.PR_BRANCH }}
                 fi
                 
                 poetry run copier update --skip-answered
                 
                 if [[ "$(git status --porcelain)" ]]; then
-                  if [[ "$(git rev-parse --abbrev-ref HEAD)" != "copier-update" ]]; then
-                    git checkout -b copier-update
+                  if [[ "$(git rev-parse --abbrev-ref HEAD)" != "${{ env.PR_BRANCH }}" ]]; then
+                    git checkout -b ${{ env.PR_BRANCH }}
                   fi
                   git add .
                   git commit -m "Sync Copier template"
-                  git push origin copier-update
+                  git push origin ${{ env.PR_BRANCH }}
                 fi
 
-                if [[ "$(git rev-parse --abbrev-ref HEAD)" == "copier-update" ]]; then
-                  gh pr create --title "Sync Copier template" --body "Sync Copier template" --base ${{ github.ref_name }} --head copier-update
+                if [[ "$(git rev-parse --abbrev-ref HEAD)" == "${{ env.PR_BRANCH }}" ]]; then
+                  gh pr create --title "Sync Copier template" \
+                  --body "Sync Copier template" \
+                  --base ${{ github.ref_name }} \
+                  --head ${{ env.PR_BRANCH }}
+                  gh pr merge ${{ env.PR_BRANCH }} --auto --squash --merge --delete-branch
                 fi
