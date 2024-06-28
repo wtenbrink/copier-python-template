@@ -64,7 +64,7 @@ jobs:
                     git checkout -b ${{ env.PR_BRANCH }}
                   fi
                   # Exclude this file from being updated while running
-                  git add -- . :!${{ env.THIS_WORKFLOW_PATH }}
+                  git add -- . ':!${{ env.THIS_WORKFLOW_PATH }}'
                   git commit -m "Sync Copier template"
                   git push origin ${{ env.PR_BRANCH }}
                 fi
